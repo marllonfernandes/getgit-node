@@ -6,6 +6,9 @@ const repositorio = 'https://github.com/marllonfernandes/getgit-node.git'
 
 app.get('/', (req, res, next) => {
     res.end('hello world')
+})
+app.get('/clone', (req, res, next) => {
+    res.end('clone repository')
     simpleGit.clone(repositorio)
 })
 
