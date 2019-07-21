@@ -34,15 +34,34 @@ app.get('/clone', async (req, res, next) => {
     }
 })
 
-app.get('/pull', async(req, res, next) => {
+app.get('/pull', async (req, res, next) => {
     res.end('pull repository')
-    gitSimple(`${workingDirPath}${dirPathApp}`)
-        .pull((err, update) => {
-            if (update && update.summary.changes) {
-                console.log('err', err)
-                console.log('update', update)
-                exec(`cd ${workingDirPath}${dirPathApp} && npm install && npm start`).then((result) =>{message.result.stdout})
-            }
-        })
+    var resultGilPull = await gitPull(`${workingDirPath}${dirPathApp}`)
+    var command = await exec(`cd ${workingDirPath}${dirPathApp} && npm install && npm start`)
 })
+
+app.get('/started', async (req, res, next) => {
+    try {
+        exec(`cd ${workingDirPath}${dirPathApp} && npm start`)
+        // exec(`${__dirname}\\started_app.bat`)
+        res.json({message: 'ok'})
+    } catch (error) {
+        res.status(500).json({message: error.message})
+    }
+
+})
+
+gitPull = (pathApp) => {
+    return new Promise((resolve, reject) => {
+        gitSimple(pathApp)
+            .pull((err, update) => {
+                if (update && update.summary.changes) {
+                    resolve(update)
+                } else {
+                    resolve(err)
+                }
+            })
+    })
+}
+
 app.listen(8091, () => { console.log('started application on port 8091') })
