@@ -2,6 +2,7 @@ const express = require('express')
 const app = express()
 const workingDirPath = 'c:\\temp\\'
 const git = require('simple-git/promise')
+const gitSimple = require('simple-git')
 // const repositorio = 'https://github.com/marllonfernandes/DevOpsTI-API.git'
 const dirPathApp = 'DevOpsTI-API'
 const process = require('child-process-promise')
@@ -33,15 +34,15 @@ app.get('/clone', async (req, res, next) => {
     }
 })
 
-app.get('/pull', (req, res, next) => {
+app.get('/pull', async(req, res, next) => {
     res.end('pull repository')
-    git(`${workingDirPath}${dirPathApp}`)
+    gitSimple(`${workingDirPath}${dirPathApp}`)
         .pull((err, update) => {
             if (update && update.summary.changes) {
                 console.log('err', err)
                 console.log('update', update)
-                process.exec('npm install');
+                exec(`cd ${workingDirPath}${dirPathApp} && npm install && npm start`).then((result) =>{message.result.stdout})
             }
-        });
+        })
 })
 app.listen(8091, () => { console.log('started application on port 8091') })
