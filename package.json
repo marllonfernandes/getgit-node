@@ -2,9 +2,8 @@
   "name": "getgit-node",
   "version": "1.0.0",
   "description": "getgit-node",
-  "main": "app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node app.js"
   },
   "repository": {
     "type": "git",
@@ -18,6 +17,8 @@
   },
   "homepage": "https://github.com/marllonfernandes/getgit-node#readme",
   "dependencies": {
+    "child-process-promise": "^2.2.1",
+    "child_process": "^1.0.2",
     "express": "^4.17.1",
     "simple-git": "^1.122.0"
   }
