@@ -1,2 +1,0 @@
-# getgit-node
-getgit-node

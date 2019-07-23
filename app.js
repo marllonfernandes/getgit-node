@@ -9,6 +9,8 @@ const exec = require('child-process-promise').exec
 const moment = require('moment')
 const fs = require('fs')
 const config = require('./config')
+const { zip } = require('zip-a-folder')
+
 // const ecosystemPM2 = fs.readFileSync('c:\\ecosystem.config.js',{encoding: 'utf-8'})
 
 app.get('/', (req, res, next) => {
@@ -53,7 +55,7 @@ app.get('/clone', async (req, res, next) => {
     try {
         var clone = await git(`${path}${dirDataAtual}`).clone(repository)
         if (clone == '') {
-            var command = await exec(`cd ${path}${dirDataAtual}\\${repository.split('/')[repository.split('/').length-1]} && npm install`)
+            var command = await exec(`cd ${path}${dirDataAtual}\\${repository.split('/')[repository.split('/').length - 1]} && npm install`)
             res.json({ messagem: command.stderr ? command.stderr : command.stdout })
         } else {
             res.json({ messagem: clone })
@@ -64,26 +66,46 @@ app.get('/clone', async (req, res, next) => {
 
 })
 
-app.get('/install', async (req, res, next) => {
-    var command = await exec(`cd ${workingDirPath}${dirPathApp} && npm install`)
-    res.end('install')
-})
-
 app.get('/pull', async (req, res, next) => {
-    res.end('pull repository')
-    var resultGilPull = await gitPull(`${workingDirPath}${dirPathApp}`)
-    var command = await exec(`cd ${workingDirPath}${dirPathApp} && npm install && npm start`)
-})
 
-app.get('/started', async (req, res, next) => {
-    try {
-        exec(`cd ${workingDirPath}${dirPathApp} && npm start`)
-        // exec(`${__dirname}\\started_app.bat`)
-        res.json({ message: 'ok' })
-    } catch (error) {
-        res.status(500).json({ message: error.message })
+    var repository = ''
+    var path = ''
+    var application = req.query.application
+    var idapp = ''
+    var dirDataAtual = moment(new Date(), "YYYYMMDDHHmm", "pt", true).format("YYYYMMDDHHmm")
+
+    if (application == null || application == undefined || application == '') {
+        res.json({ message: 'Inválid application!' })
+        return
     }
 
+    if (application == 'back') {
+        repository = config.repoBack
+        path = config.pathApplicationBack
+        idapp = config.idPm2Back
+    } else {
+        path = config.pathApplicationFront
+        idapp = config.idPm2Front
+        if (application == 'fronts') {
+            repository = config.repoFrontS
+        } else {
+            repository = config.repoFrontA
+        }
+    }
+
+    var diretorioOrigem = `${path}\\${repository.split('/')[repository.split('/').length - 1]}`
+    var fileDestino = `${path}${repository.split('/')[repository.split('/').length - 1]}-bkp${dirDataAtual}.zip`
+
+    // faz backup da aplicacao
+    await zip(diretorioOrigem, fileDestino);
+    
+    // baixa do git os arquivos atualizados
+    var resultGilPull = await gitPull(diretorioOrigem)
+    
+    // instala os pacotes e reinicia aplicacao
+    var command = await exec(`cd ${diretorioOrigem} && npm install && pm2 restart ${idapp}`)
+
+    res.json({message: 'pull repository'})
 })
 
 gitPull = (pathApp) => {
