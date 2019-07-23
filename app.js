@@ -105,7 +105,17 @@ app.get('/pull', async (req, res, next) => {
 
     if (!resultGilPull == null || !resultGilPull == undefined) {
         // instala os pacotes e reinicia aplicacao
-        var command = await exec(`cd ${diretorioOrigem} && npm install && pm2 restart ${idapp}`)
+        await exec(`cd ${diretorioOrigem} && npm install`)
+        exec(`pm2 restart ${idapp}`)
+        .then(function (result) {
+            var stdout = result.stdout;
+            var stderr = result.stderr;
+            console.log('stdout: ', stdout);
+            console.log('stderr: ', stderr);
+        })
+        .catch(function (err) {
+            console.error('ERROR: ', err.message);
+        })
         res.json({ message: 'Successfully updated application!' })
     } else {
         res.json({ message: 'There was no application update!' })
@@ -126,4 +136,4 @@ gitPull = (pathApp) => {
     })
 }
 
-app.listen(8091, () => { console.log('started application on port 8091') })
+app.listen(4000, () => { console.log('started application on port 4000') })
