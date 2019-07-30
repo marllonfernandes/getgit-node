@@ -8,6 +8,7 @@ const moment = require('moment')
 const fs = require('fs')
 const config = require('./config')
 const { zip } = require('zip-a-folder')
+const PM2 = require('./pm2')
 
 // const ecosystemPM2 = fs.readFileSync('c:\\ecosystem.config.js',{encoding: 'utf-8'})
 
@@ -91,6 +92,8 @@ app.get('/pull', async (req, res, next) => {
         }
     }
 
+    var processos = await new PM2().list()
+
     var diretorioOrigem = `${path}\\${repository.split('/')[repository.split('/').length - 1]}`
     var fileDestino = `${path}${repository.split('/')[repository.split('/').length - 1]}-bkp${dirDataAtual}.zip`
 
@@ -107,15 +110,15 @@ app.get('/pull', async (req, res, next) => {
         // instala os pacotes e reinicia aplicacao
         await exec(`cd ${diretorioOrigem} && npm install`)
         exec(`pm2 restart ${idapp}`)
-        .then(function (result) {
-            var stdout = result.stdout;
-            var stderr = result.stderr;
-            console.log('stdout: ', stdout);
-            console.log('stderr: ', stderr);
-        })
-        .catch(function (err) {
-            console.error('ERROR: ', err.message);
-        })
+            .then(function (result) {
+                var stdout = result.stdout;
+                var stderr = result.stderr;
+                console.log('stdout: ', stdout);
+                console.log('stderr: ', stderr);
+            })
+            .catch(function (err) {
+                console.error('ERROR: ', err.message);
+            })
         res.json({ message: 'Successfully updated application!' })
     } else {
         res.json({ message: 'There was no application update!' })
