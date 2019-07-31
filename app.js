@@ -1,14 +1,13 @@
 const express = require('express')
 const app = express()
-const git = require('simple-git/promise')
-const gitSimple = require('simple-git')
 const process = require('child-process-promise')
 const exec = require('child-process-promise').exec
 const moment = require('moment')
 const fs = require('fs')
 const config = require('./config')
 const { zip } = require('zip-a-folder')
-const PM2 = require('./pm2')
+const Pm2 = require('./pm2')
+const Git = require('./git')
 
 // const ecosystemPM2 = fs.readFileSync('c:\\ecosystem.config.js',{encoding: 'utf-8'})
 
@@ -92,7 +91,7 @@ app.get('/pull', async (req, res, next) => {
         }
     }
 
-    var processos = await new PM2().list()
+    var processos = await new Pm2().list()
 
     var diretorioOrigem = `${path}\\${repository.split('/')[repository.split('/').length - 1]}`
     var fileDestino = `${path}${repository.split('/')[repository.split('/').length - 1]}-bkp${dirDataAtual}.zip`
@@ -101,10 +100,10 @@ app.get('/pull', async (req, res, next) => {
     if (fs.existsSync(diretorioOrigem)) {
         await zip(diretorioOrigem, fileDestino);
     } else {
-        await git(path).clone(repository)
+        await new Git(path).clone(repository)
     }
     // baixa do git os arquivos atualizados
-    var resultGilPull = await gitPull(diretorioOrigem)
+    var resultGilPull = await new Git(path).pull(diretorioOrigem)
 
     if (!resultGilPull == null || !resultGilPull == undefined) {
         // instala os pacotes e reinicia aplicacao
@@ -125,18 +124,5 @@ app.get('/pull', async (req, res, next) => {
     }
 
 })
-
-gitPull = (pathApp) => {
-    return new Promise((resolve, reject) => {
-        gitSimple(pathApp)
-            .pull((err, update) => {
-                if (update && update.summary.changes) {
-                    resolve(update)
-                } else {
-                    resolve(err)
-                }
-            })
-    })
-}
 
 app.listen(4000, () => { console.log('started application on port 4000') })
