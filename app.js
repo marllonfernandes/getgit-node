@@ -1,128 +1,39 @@
 const express = require('express')
 const app = express()
-const process = require('child-process-promise')
+const bodyParser = require('body-parser')
+const path = require('path')
+const expressValidator = require('express-validator')
+const load = require('express-load')
 const exec = require('child-process-promise').exec
 const moment = require('moment')
 const fs = require('fs')
-const config = require('./config')
 const { zip } = require('zip-a-folder')
-const Pm2 = require('./pm2')
-const Git = require('./git')
+const Pm2 = require('./factory/pm2')
+const Git = require('./factory/git')
 
-// const ecosystemPM2 = fs.readFileSync('c:\\ecosystem.config.js',{encoding: 'utf-8'})
+const allowCors = function (req, res, next) {
+    res.header("Access-Control-Allow-Origin", "*"); // colocar os dominios permitidos | ex: 127.0.0.1:3000
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization, Access-Control-Allow-Credentials, X-Access-Token, X-Key");
+    res.header("Access-Control-Allow-Methods", "GET, PUT, POST, DELETE, OPTIONS, PATCH");
+    res.header("Access-Control-Allow-Credentials", "true");
+    next();
+  }
 
-app.get('/', (req, res, next) => {
-    res.end('Welcome to the Build CI NodeJs Application')
-})
-// app.get('/clone', async (req, res, next) => {
+//rest API requirements
+app.use(allowCors)
+app.use(bodyParser.urlencoded({ extended: true }))
+app.use(bodyParser.json())
+app.use(expressValidator())
 
-//     var repository = req.query.repository
-//     var path = req.query.path
-//     var application = req.query.application
-//     var dirDataAtual = moment(new Date(), "YYYY_MM_DD_HH_mm", "pt", true).format("YYYY_MM_DD_HH_mm")
+app.set('moment',moment)
+app.set('path',path)
+app.set('exec',exec)
+app.set('fs',fs)
+app.set('zip',zip)
+app.set('Pm2',Pm2)
+app.set('Git',Git)
 
-//     if (application == null || application == undefined || application == '') {
-//         res.json({ message: 'Inválid application!' })
-//         return
-//     }
-
-//     if (repository == null || repository == undefined || repository == '') {
-//         if (application == 'back') {
-//             repository = config.repoBack
-//         } else {
-//             if (application == 'fronts') {
-//                 repository = config.repoFrontS
-//             } else {
-//                 repository = config.repoFrontA
-//             }
-//         }
-//     }
-
-//     if (path == null || path == undefined || path == '') {
-//         if (application == 'back') {
-//             path = config.pathApplicationBack
-//         } else {
-//             path = config.pathApplicationFront
-//         }
-//     }
-
-//     if (!fs.existsSync(`${path}${dirDataAtual}`)) {
-//         fs.mkdirSync(`${path}${dirDataAtual}`);
-//     }
-
-//     try {
-//         var clone = await git(`${path}${dirDataAtual}`).clone(repository)
-//         if (clone == '') {
-//             var command = await exec(`cd ${path}${dirDataAtual}\\${repository.split('/')[repository.split('/').length - 1]} && npm install`)
-//             res.json({ messagem: command.stderr ? command.stderr : command.stdout })
-//         } else {
-//             res.json({ messagem: clone })
-//         }
-//     } catch (error) {
-//         res.status(500).json({ messagem: error.message })
-//     }
-
-// })
-
-app.get('/pull', async (req, res, next) => {
-
-    var repository = ''
-    var path = ''
-    var application = req.query.application
-    var idapp = ''
-    var dirDataAtual = moment(new Date(), "YYYYMMDDHHmm", "pt", true).format("YYYYMMDDHHmm")
-
-    if (application == null || application == undefined || application == '') {
-        res.json({ message: 'Inválid application!' })
-        return
-    }
-
-    if (application == 'back') {
-        repository = config.repoBack
-        path = config.pathApplicationBack
-        idapp = config.idPm2Back
-    } else {
-        path = config.pathApplicationFront
-        idapp = config.idPm2Front
-        if (application == 'fronts') {
-            repository = config.repoFrontS
-        } else {
-            repository = config.repoFrontA
-        }
-    }
-
-    var processos = await new Pm2().list()
-
-    var diretorioOrigem = `${path}\\${repository.split('/')[repository.split('/').length - 1]}`
-    var fileDestino = `${path}${repository.split('/')[repository.split('/').length - 1]}-bkp${dirDataAtual}.zip`
-
-    // faz backup da aplicacao
-    if (fs.existsSync(diretorioOrigem)) {
-        await zip(diretorioOrigem, fileDestino);
-    } else {
-        await new Git(path).clone(repository)
-    }
-    // baixa do git os arquivos atualizados
-    var resultGilPull = await new Git(path).pull(diretorioOrigem)
-
-    if (!resultGilPull == null || !resultGilPull == undefined) {
-        // instala os pacotes e reinicia aplicacao
-        await exec(`cd ${diretorioOrigem} && npm install`)
-        exec(`pm2 restart ${idapp}`)
-            .then(function (result) {
-                var stdout = result.stdout;
-                var stderr = result.stderr;
-                console.log('stdout: ', stdout);
-                console.log('stderr: ', stderr);
-            })
-            .catch(function (err) {
-                console.error('ERROR: ', err.message);
-            })
-        res.json({ message: 'Successfully updated application!' })
-    } else {
-        res.json({ message: 'There was no application update!' })
-    }
-
-})
+// Autoload Configuration.
+load('controllers').then('routes').into(app)
 
 app.listen(4000, () => { console.log('started application on port 4000') })

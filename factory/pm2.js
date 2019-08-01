@@ -16,6 +16,14 @@ class PM2 {
             })
         })
     }
+    restart(process) {
+        return new Promise((resolve, reject) => {
+            pm2.restart(process, (err) => {
+                resolve(err ? err : true)
+            })
+        })
+    }
+
 }
 
 module.exports = PM2;
