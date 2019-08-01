@@ -17,6 +17,7 @@ exports.pull = async (req, res, next) => {
         var repository = ''
         var path = ''
         var id = req.query.id
+        var forceRestart = req.query.forcerestart == null || req.query.forcerestart == undefined ? false : req.query.forcerestart
         var moment = req.app.get('moment')
         var Pm2 = req.app.get('Pm2')
         var fs = req.app.get('fs')
@@ -48,17 +49,22 @@ exports.pull = async (req, res, next) => {
 
         // faz backup da aplicacao
         if (fs.existsSync(diretorioOrigem)) {
+            console.log('fazendo backup...')
             await zip(diretorioOrigem, fileDestino);
         } else {
             await new Git(path).clone(repository)
+            console.log('clonando repositorio...')
         }
         // baixa do git os arquivos atualizados
+        console.log('baixando atualizações no repositorio...')
         var pull = await new Git(path).pull(diretorioOrigem)
 
-        if (!pull == null || !pull == undefined) {
+        if (!pull == null || !pull == undefined || forceRestart) {
             // instala os pacotes e reinicia aplicacao
+            console.log('instalando pacotes/dependencias...')
             await exec(`cd ${diretorioOrigem} && npm install`)
             // reinicia aplicacao
+            console.log('reiniciando aplicação...')
             if (await new Pm2().restart(id)) {
                 res.json({ message: 'Application updated and successfully restarted!' })
             } else {
