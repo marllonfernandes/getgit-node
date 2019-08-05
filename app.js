@@ -10,6 +10,7 @@ const fs = require('fs')
 const { zip } = require('zip-a-folder')
 const Pm2 = require('./factory/pm2')
 const Git = require('./factory/git')
+const Directory = require('./factory/copydir')
 
 const allowCors = function (req, res, next) {
     res.header("Access-Control-Allow-Origin", "*"); // colocar os dominios permitidos | ex: 127.0.0.1:3000
@@ -32,6 +33,7 @@ app.set('fs',fs)
 app.set('zip',zip)
 app.set('Pm2',Pm2)
 app.set('Git',Git)
+app.set('Directory',Directory)
 
 // Autoload Configuration.
 load('controllers').then('routes').into(app)

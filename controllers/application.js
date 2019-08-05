@@ -26,6 +26,7 @@ exports.pull = async (req, res, next) => {
         var Git = req.app.get('Git')
         var dirDataAtual = moment(new Date(), "YYYYMMDDHHmm", "pt", true).format("YYYYMMDDHHmm")
         var processosPM2 = await new Pm2().list()
+        var Directory = req.app.get('Directory')
 
         processosPM2.forEach(element => {
             if (element.pm_id == id) {
@@ -46,11 +47,13 @@ exports.pull = async (req, res, next) => {
 
         var diretorioOrigem = `${path}\\`
         var fileDestino = `${path}-bkp${dirDataAtual}.zip`
+        var dirDestino = `${path}-bkp${dirDataAtual}\\`
 
         // faz backup da aplicacao
         if (fs.existsSync(diretorioOrigem)) {
             console.log('fazendo backup...')
-            await zip(diretorioOrigem, fileDestino);
+            // await zip(diretorioOrigem, fileDestino)
+            await new Directory().copyDir(diretorioOrigem, dirDestino)
         } else {
             await new Git(path).clone(repository)
             console.log('clonando repositorio...')
