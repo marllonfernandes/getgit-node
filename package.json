@@ -25,7 +25,7 @@
     "express-load": "^1.1.16",
     "express-validator": "^5.3.1",
     "moment": "^2.24.0",
-    "pm2": "^3.5.1",
+    "pm2": "^5.2.0",
     "simple-git": "^1.122.0",
     "zip-a-folder": "0.0.8"
   }
